@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "60665656901",
+    "project_id": "fir-practice-fec57",
+    "storage_bucket": "fir-practice-fec57.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:60665656901:android:6b2913cbe97aeb97ded52c",
+        "android_client_info": {
+          "package_name": "com.example.firebase_practice"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAKmShd8lY0uks9kx0eLFjK4rjCsQADiQY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
