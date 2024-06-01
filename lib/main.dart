@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_practice/controller.dart';
 import 'package:firebase_practice/firebase_options.dart';
@@ -10,6 +13,8 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+  FirebaseFirestore.instance.settings =
+      const Settings(persistenceEnabled: true, host: '10.0.2.2:8080');
   runApp(const MyApp());
 }
 
@@ -37,36 +42,23 @@ class FirebasePractice extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = Get.put(FirebasePracticeController());
+    const collectionName = 'diary';
+    String url = '';
+    upload() async {
+      final String u = await controller.uploadImage();
+      print(u);
+    }
 
-    Map<String, dynamic> data = {
-      'name': 'tanjim',
-      'age': 22,
-      'mood': 'experincing absolute zero',
-      'money': [100, 300, 200, 500],
-      'need': {'data': "wolf", 'device': 'new phone', 'qty': 22.5}
-    };
-
-    const collectionname = 'diary';
-    print(controller.doc.value);
-    print(controller.documentID.value);
-    controller.readData(collectionname, 'GwHBVc8RRnpLxmSEUTxe');
-    controller.readAlldataFromcollcetion(collectionname);
     return Scaffold(
       appBar: AppBar(
         title: 'Firebase Practice'.text.make(),
       ),
       body: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 20),
-        child: Column(
-          children: [
-            ElevatedButton(
-              onPressed: () => controller.addSubcollection(collectionname,
-                  'Subcollection', 'GwHBVc8RRnpLxmSEUTxe', data),
-              child: 'Add'.text.make(),
-            )
-          ],
-        ),
-      ),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 20),
+          child: ElevatedButton(
+            child: Text('upload $url'),
+            onPressed: () => controller.deleteData(),
+          )),
     );
   }
 }

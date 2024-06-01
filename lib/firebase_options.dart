@@ -57,6 +57,8 @@ class DefaultFirebaseOptions {
     appId: '1:60665656901:android:6b2913cbe97aeb97ded52c',
     messagingSenderId: '60665656901',
     projectId: 'fir-practice-fec57',
+    databaseURL: 'https://fir-practice-fec57-default-rtdb.firebaseio.com',
     storageBucket: 'fir-practice-fec57.appspot.com',
   );
+
 }

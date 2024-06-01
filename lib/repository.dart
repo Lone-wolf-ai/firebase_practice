@@ -1,7 +1,9 @@
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_practice/utils/exceptions/firebase_exceptions.dart';
 import 'package:firebase_practice/utils/exceptions/platform_exceptions.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -101,11 +103,32 @@ class FirebaseRepo extends GetxController {
   createSubCollection(String collectionName, String subCollectionName,
       dynamic docId, Map<String, dynamic> data) async {
     try {
-      final docref = _firestore
+      final docref = await _firestore
           .collection(collectionName)
           .doc(docId)
           .collection(subCollectionName)
           .add(data);
+      return docref.id;
+    } on FirebaseException catch (e) {
+      throw TFirebaseException(e.code).message;
+    } on PlatformException catch (e) {
+      throw TPlatformException(e.code).message;
+    } catch (e) {
+      if (kDebugMode) {
+        print(e.toString());
+      }
+    }
+  }
+
+  //filtter data
+  filterUsingQuery(
+      String collectionName, String fieldName, dynamic value) async {
+    try {
+      final data = await _firestore
+          .collection(collectionName)
+          .where(fieldName, isEqualTo: value)
+          .get();
+      return data;
     } on FirebaseException catch (e) {
       throw TFirebaseException(e.code).message;
     } on PlatformException catch (e) {
@@ -159,6 +182,7 @@ class FirebaseRepo extends GetxController {
   updateData(
       String collectionName, dynamic id, Map<String, dynamic> data) async {
     try {
+      data['id'] = FieldValue.increment(1);
       _firestore.collection(collectionName).doc(id).update(data);
     } on FirebaseException catch (e) {
       throw TFirebaseException(e.code).message; // Or handle the error as needed
@@ -185,6 +209,40 @@ class FirebaseRepo extends GetxController {
         print(e.toString());
       }
       throw 'An unexpected error occurred.'; // Or provide a more user-friendly message
+    }
+  }
+  //cloud storage
+
+  Future<String> uploadFile(Uint8List data, String path) async {
+    try {
+      final TaskSnapshot snapshot =
+          await FirebaseStorage.instance.ref(path).putData(data);
+      return await snapshot.ref.getDownloadURL();
+    } on FirebaseException catch (e) {
+      throw TFirebaseException(e.code).message; // Or handle errors as needed
+    } on PlatformException catch (e) {
+      throw TPlatformException(e.code).message; // Or handle errors as needed
+    } catch (e) {
+      if (kDebugMode) {
+        print(e.toString());
+      }
+      throw 'An unexpected error occurred.'; // Or provide a user-friendly message
+    }
+  }
+
+// Add this function to compress the image (replace with your logic if needed)
+  deleteFile(String path) async {
+    try {
+      await FirebaseStorage.instance.ref(path).delete();
+    } on FirebaseException catch (e) {
+      throw TFirebaseException(e.code).message; // Or handle errors as needed
+    } on PlatformException catch (e) {
+      throw TPlatformException(e.code).message; // Or handle errors as needed
+    } catch (e) {
+      if (kDebugMode) {
+        print(e.toString());
+      }
+      throw 'An unexpected error occurred.'; // Or provide a user-friendly message
     }
   }
 }

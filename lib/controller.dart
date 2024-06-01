@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_practice/repository.dart';
 import 'package:firebase_practice/utils/exceptions/firebase_exceptions.dart';
@@ -5,7 +7,13 @@ import 'package:firebase_practice/utils/exceptions/platform_exceptions.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:uuid/uuid.dart';
+import 'package:uuid/v4.dart';
 
 class FirebasePracticeController extends GetxController {
   static FirebasePracticeController get instance => Get.find();
@@ -18,6 +26,11 @@ class FirebasePracticeController extends GetxController {
   RxString documentID = ''.obs;
   RxString doc = ''.obs;
   RxList datalist = [].obs;
+  @override
+  onInit() async {
+    super.onInit();
+    final permission = await Permission.locationWhenInUse.request();
+  }
 
   ///signup
   registerWithemailandPass() async {
@@ -62,7 +75,11 @@ class FirebasePracticeController extends GetxController {
   ///create a subcollection
   addSubcollection(String collectionName, String subCollectionName,
       dynamic docId, Map<String, dynamic> data) async {
+    final position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high);
     try {
+      data['createdAt'] = FieldValue.serverTimestamp();
+      data['location'] = GeoPoint(position.latitude, position.longitude);
       final docref = firebaserepo.createSubCollection(
           collectionName, subCollectionName, docId, data);
     } on FirebaseException catch (e) {
@@ -73,6 +90,25 @@ class FirebasePracticeController extends GetxController {
       if (kDebugMode) {
         print(e.toString());
       }
+    }
+  }
+
+  Future<List<QueryDocumentSnapshot>> filterData(
+      String collectionName, String fieldName, dynamic value) async {
+    try {
+      final snapshot =
+          await firebaserepo.filterUsingQuery(collectionName, fieldName, value);
+      return snapshot
+          .docs; // Return a list of documents (QueryDocumentSnapshot)
+    } on FirebaseException catch (e) {
+      throw TFirebaseException(e.code).message;
+    } on PlatformException catch (e) {
+      throw TPlatformException(e.code).message;
+    } catch (e) {
+      if (kDebugMode) {
+        print(e.toString());
+      }
+      return []; // Return an empty list on errors
     }
   }
 
@@ -142,6 +178,50 @@ class FirebasePracticeController extends GetxController {
         print(e.toString());
       }
       throw 'something went wrong';
+    }
+  }
+
+  //storage
+  Future<String> uploadImage() async {
+    try {
+      final ImagePicker picker = ImagePicker();
+      final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+      final compressedData = await FlutterImageCompress.compressWithFile(
+          pickedFile!.path,
+          quality: 70);
+      final randomId = const Uuid().v4();
+      if (compressedData != null) {
+        final link =
+            await firebaserepo.uploadFile(compressedData, "image/$randomId");
+        return link;
+      } else {
+        throw 'No image selected.'; // Or handle errors as needed
+      }
+    } on FirebaseException catch (e) {
+      throw TFirebaseException(e.code).message;
+    } on PlatformException catch (e) {
+      throw TPlatformException(e.code).message;
+    } catch (e) {
+      if (kDebugMode) {
+        print(e.toString());
+      }
+      throw 'An unexpected error occurred.';
+    }
+  }
+
+  deleteData() async {
+    try {
+      await firebaserepo
+          .deleteFile('image/ea2a0346-e02a-4de0-801f-535959f98e62');
+    } on FirebaseException catch (e) {
+      throw TFirebaseException(e.code).message;
+    } on PlatformException catch (e) {
+      throw TPlatformException(e.code).message;
+    } catch (e) {
+      if (kDebugMode) {
+        print(e.toString());
+      }
+      throw 'An unexpected error occurred.';
     }
   }
 }
